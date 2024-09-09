@@ -56,3 +56,11 @@ jobs:
         run: |
           databricks repos list
           databricks clusters list
+
+      - name: Check content
+        run: |
+          ls
+
+      - name: Copy content to databricks workspace
+        run: |
+          ls
