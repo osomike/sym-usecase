@@ -57,10 +57,14 @@ jobs:
           databricks repos list
           databricks clusters list
 
-      - name: Check content
+      - name: Clean folder
         run: |
-          ls -a
+          echo "Cleaning folder /Shared/pipeline/"
+          databricks workspace delete --recursive /Shared/pipeline/
 
       - name: Copy content to databricks workspace
+        env:
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
         run: |
-          ls -a
+          echo "Copying content from $BRANCH_NAME to folder /Shared/pipeline/"
+          databricks workspace import-dir ./src/ /Shared/pipeline/
