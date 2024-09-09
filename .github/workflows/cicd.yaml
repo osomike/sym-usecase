@@ -59,8 +59,8 @@ jobs:
 
       - name: Check content
         run: |
-          ls
+          ls -a
 
       - name: Copy content to databricks workspace
         run: |
-          ls
+          ls -a
