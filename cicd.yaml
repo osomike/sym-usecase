@@ -1,0 +1,93 @@
+# This is a basic workflow to help you get started with Actions
+
+name: deploy-pipeline
+
+# Controls when the workflow will run
+on:
+
+  workflow_dispatch:
+    inputs:
+      deploy-to:
+        type: choice
+        description: Environment to which the code will be deployed
+        options:
+          - dev
+          - prd
+        required: true
+        default: dev
+
+env:
+  PYTHON_VERSION: '3.10'
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+
+  create-repo:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.deploy-to }}
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: Create repository
+        env:
+          GH_TOKEN: ${{ secrets.ADMIN_GITHUB_TOKEN }}
+        run: |
+          sudo apt install gh -y
+          echo "CODE is ${{ secrets.ADMIN_GITHUB_TOKEN }}"
+          echo "CODE is ${{ inputs.project-name }}"
+          gh repo create ${{ inputs.project-name }} --public --description "ML project for ${{ inputs.project-name }} "
+
+  initialize-repo:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.deploy-to }}
+    needs: [create-repo]
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: Initialize repository
+        env:
+          GH_TOKEN: ${{ secrets.ADMIN_GITHUB_TOKEN }}
+        run: |
+          git config --global user.email "mike.claure@gmail.com"
+          git config --global user.name "Oscar Mike"
+          echo "## This is a new repo" > README.md
+          git init -b main
+          git add README.md
+          git commit -m "initialize the repository"
+          git remote add origin "https://osomike:$GH_TOKEN@github.com/osomike/${{ inputs.project-name }}.git"
+          git push -u origin main
+
+  deploy-code:
+
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.deploy-to }}
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Check out source code
+        uses: actions/checkout@v4
+
+      - name: Setup Python version
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install curl unzip -y
+          python -m pip install --upgrade pip
+          curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+
+      - name: Verify installations
+        run: |
+          databricks --version
+
+      - name: List clusters
+        env:
+          DATABRICKS_HOST: ${{ vars.AZURE_DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+        run: |
+          databricks repos list
+          databricks clusters list
