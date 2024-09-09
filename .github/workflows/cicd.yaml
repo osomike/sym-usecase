@@ -22,41 +22,6 @@ env:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
-  create-repo:
-    # The type of runner that the job will run on
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-to }}
-    # Steps represent a sequence of tasks that will be executed as part of the job
-    steps:
-      - name: Create repository
-        env:
-          GH_TOKEN: ${{ secrets.ADMIN_GITHUB_TOKEN }}
-        run: |
-          sudo apt install gh -y
-          echo "CODE is ${{ secrets.ADMIN_GITHUB_TOKEN }}"
-          echo "CODE is ${{ inputs.project-name }}"
-          gh repo create ${{ inputs.project-name }} --public --description "ML project for ${{ inputs.project-name }} "
-
-  initialize-repo:
-    # The type of runner that the job will run on
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-to }}
-    needs: [create-repo]
-    # Steps represent a sequence of tasks that will be executed as part of the job
-    steps:
-      - name: Initialize repository
-        env:
-          GH_TOKEN: ${{ secrets.ADMIN_GITHUB_TOKEN }}
-        run: |
-          git config --global user.email "mike.claure@gmail.com"
-          git config --global user.name "Oscar Mike"
-          echo "## This is a new repo" > README.md
-          git init -b main
-          git add README.md
-          git commit -m "initialize the repository"
-          git remote add origin "https://osomike:$GH_TOKEN@github.com/osomike/${{ inputs.project-name }}.git"
-          git push -u origin main
-
   deploy-code:
 
     # The type of runner that the job will run on
